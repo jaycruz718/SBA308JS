@@ -76,37 +76,6 @@ const LearnerSubmissions = [
   }
 ];
 
-function getLearnerData(course, ag, submission) {
-  // here, we would process this data to achieve the desired result.
-  const result = [
-    {
-      id: 125,
-      avg: 0.985, // (47 + 150) / (50 + 150)
-      1: 0.94, // 47 / 50
-      2: 1.0 // 150 / 150
-    },
-    {
-      id: 132,
-      avg: 0.82, // (39 + 125) / (50 + 150)
-      1: 0.78, // 39 / 50
-      2: 0.833 // late: (140 - 15) / 150
-    }
-  ];
-
-  return result;
-}
-
-const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
-
-// console.log(result);
-
-// Helper Functions ----
-
-// function isValidNumber(value) {
-  // return typeof value === "number" && !isNaN(value) && isFinite(value);
-// }
-
-
 // Check if the assignment group belongs to the course.
 function isValidCourseAssignmentGroup(CourseInfo, AssignmentGroup) {
   return CourseInfo.id === AssignmentGroup.course_id;
@@ -114,7 +83,7 @@ function isValidCourseAssignmentGroup(CourseInfo, AssignmentGroup) {
 
 // Check if a learner's submission is valid.
 function isValidSubmission(submission, assignment) {
-  const score = submission.score;
+  const score = submission.submission.score;
   const pointsPossible = assignment.points_possible;
 
   if (pointsPossible === 0 || typeof score !== "number" || isNaN(score)) {
@@ -160,8 +129,52 @@ function processLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions) {
     }
   }
 
-  return {learnerData, assignmentScores};
+  return { learnerData, assignmentScores };
 }
 
+// Get and format learner data, including scores and averages.
+function getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions) {
+  try {
+    const { learnerData, assignmentScores } = processLearnerData(
+      CourseInfo,
+      AssignmentGroup,
+      LearnerSubmissions
+    );
+  
+    const results = [];
+  
+    for (const learnerID in learnerData) {
+      const learner = learnerData[learnerID];
+  
+      const learnerResult = {
+        id: learner.id,
+      };
+  
+      for (const assignmentID in assignmentScores) {
+        learnerResult[assignmentID] = assignmentScores[assignmentID];
+      }
+  
+      results.push(learnerResult);
+    }
+  
+    return results;
+    
+  } catch(error) {
+    console.error(error.message);
+  }
+ 
+}
+
+// Get learner data and handle potential errors.
+const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
+console.log(result);
+
+
+
+// Helper Functions ----
+
+// function isValidNumber(value) {
+  // return typeof value === "number" && !isNaN(value) && isFinite(value);
+// }
 
 

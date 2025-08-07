@@ -1,6 +1,8 @@
 ### The Example we are working with
 function getLearnerData(course, ag, submissions) {
   // here, we would process this data to achieve the desired result.
+function getLearnerData(course, ag, submissions) {
+  // here, we would process this data to achieve the desired result.
   const result = [
     {
       id: 125,
@@ -29,4 +31,5 @@ console.log(result);
 ## Learner's Submission
 - created a if/else to check if Learner's Submission is valid.
 
-## 
+## Process
+- 
