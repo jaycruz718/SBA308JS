@@ -103,97 +103,65 @@ const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
 // Helper Functions ----
 
 // function isValidNumber(value) {
-  return typeof value === "number" && !isNaN(value) && isFinite(value);
+  // return typeof value === "number" && !isNaN(value) && isFinite(value);
+// }
+
+
+// Check if the assignment group belongs to the course.
+function isValidCourseAssignmentGroup(CourseInfo, AssignmentGroup) {
+  return CourseInfo.id === AssignmentGroup.course_id;
 }
 
+// Check if a learner's submission is valid.
+function isValidSubmission(submission, assignment) {
+  const score = submission.score;
+  const pointsPossible = assignment.points_possible;
 
-function getLearnerData(course, assignmentGroup, submissions) {
-  try {
-    // Validate assignmentGroup belongs to the course
-    if (assignmentGroup.course_id !== course.id) {
-      throw new Error("Assignment group does not belong to the provided course.");
+  if (pointsPossible === 0 || typeof score !== "number" || isNaN(score)) {
+    return false;
+  } else { 
+    return true;
+  }
+}
+
+// Process learner data, calculate scores, and return the results.
+function processLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions) {
+  if (!isValidCourseAssignmentGroup(CourseInfo, AssignmentGroup)) {
+    throw new Error("Invalid input: AssignmentGroup does not belong to the course.");
+  }
+
+  const assignments = AssignmentGroup.assignments;
+  const assignmentScores = {};
+  const learnerData = {};
+
+  for (const submission of LearnerSubmissions) {
+    const learnerID = submission.learner_id;
+    const assignmentID = submission.assignment_id;
+    const assignment = assignments.find((a) => a.id === assignmentID);
+
+    if (!assignment || new Date(submission.submission.submitted_at) > new Date(assignment.due_at)) {
+      continue;
     }
 
-    const now = new Date();
-    const validAssignments = {};
-
-    // Filter out future assignments and validate points_possible
-    for (const assignment of assignmentGroup.assignments) {
-      const dueDate = new Date(assignment.due_at);
-
-      if (isNaN(dueDate.getTime())) {
-        throw new Error(`Invalid due date for assignment ID ${assignment.id}`);
-      }
-
-      if (dueDate > now) continue; // Exclude future assignments
-
-      const pointsPossible = Number(assignment.points_possible);
-      if (!isValidNumber(pointsPossible) || pointsPossible <= 0) {
-        throw new Error(`Invalid points_possible for assignment ID ${assignment.id}`);
-      }
-
-      validAssignments[assignment.id] = {
-        pointsPossible,
-        dueDate,
-      };
-    }
-
-    const learnerMap = {};
-
-    for (const submission of submissions) {
-      const { learner_id, assignment_id, submission: sub } = submission;
-
-      const assignment = validAssignments[assignment_id];
-      if (!assignment) continue; // Skip assignments that are invalid or not yet due
-
-      const { pointsPossible, dueDate } = assignment;
-
-      let score = Number(sub.score);
-      if (!isValidNumber(score)) {
-        throw new Error(`Invalid score for learner ${learner_id} on assignment ${assignment_id}`);
-      }
-
-      const submittedDate = new Date(sub.submitted_at);
-      if (isNaN(submittedDate.getTime())) {
-        throw new Error(`Invalid submitted_at date for learner ${learner_id}`);
-      }
-
-      // Apply 10% late penalty
-      if (submittedDate > dueDate) {
-        score -= pointsPossible * 0.1;
-        if (score < 0) score = 0;
-      }
-
-      const normalizedScore = score / pointsPossible;
-
-      // Initialize learner entry if needed
-      if (!learnerMap[learner_id]) {
-        learnerMap[learner_id] = {
-          id: learner_id,
+    if (isValidSubmission(submission, assignment)) {
+      if (!learnerData[learnerID]) {
+        learnerData[learnerID] = {
+          id: learnerID,
           totalScore: 0,
-          totalPossible: 0,
+          totalWeight: 0,
         };
       }
 
-      learnerMap[learner_id][assignment_id] = Number(normalizedScore.toFixed(3));
-      learnerMap[learner_id].totalScore += score;
-      learnerMap[learner_id].totalPossible += pointsPossible;
+      const score = submission.submission.score;
+      const pointsPossible = assignment.points_possible;
+      learnerData[learnerID].totalScore += (score / pointsPossible) * pointsPossible;
+      learnerData[learnerID].totalWeight += pointsPossible;
+      assignmentScores[assignmentID] = (score / pointsPossible) * 100;
     }
-
-    // Format final output
-    const result = Object.values(learnerMap).map(learner => {
-      learner.avg = Number((learner.totalScore / learner.totalPossible).toFixed(3));
-      delete learner.totalScore;
-      delete learner.totalPossible;
-      return learner;
-    });
-
-    return result;
-  } catch (error) {
-    console.error("Error in getLearnerData:", error.message);
-    return [];
   }
+
+  return {learnerData, assignmentScores};
 }
-console.log(result);
+
 
 

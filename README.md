@@ -22,3 +22,11 @@ function getLearnerData(course, ag, submissions) {
 const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
 
 console.log(result);
+
+## Assignment Group
+- finally created the code for checking the assignment group.
+
+## Learner's Submission
+- created a if/else to check if Learner's Submission is valid.
+
+## 
