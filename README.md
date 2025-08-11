@@ -32,4 +32,4 @@ console.log(result);
 - created a if/else to check if Learner's Submission is valid.
 
 ## Process
-- 
+- Learned so much. It wasn't easy but it was fun.
